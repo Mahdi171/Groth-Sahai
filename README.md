@@ -44,3 +44,6 @@ view --> command palette --> search for Python: Select Interpreter --> choose yo
 ```
 
 - Note that python 3.8 and above seems to be broken for charm-crypto, see [this issue](https://github.com/JHUISI/charm/issues/239).
+
+### Disclaimer
+This code is experimental in nature and not production ready and safe. The codebase should not be used in production contracts without further review, tests, and updates.
