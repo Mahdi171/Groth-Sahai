@@ -125,14 +125,21 @@ def end_bench(group):
 g1,g2=group.random(G1),group.random(G2)
 pp={'G1':g1,'G2':g2,'GT':pair(g1,g2)} 
 
+
+###########################################################
+# A simple Test & main function for arbitrary number of PPE
+###########################################################
+
 def example():
     c_x = [10, 4]
     c_y = [2, group.init(ZR,-5)]
+    # This example is the same as one of examples in this repo: volhovm/groth-sahai-python
 
     # The values a,b only hide 2 and 5: "None" means "hide this values under commitment".
     # Non-hidden values must be the same as in X, Y.
     # So essentially it makes sure that \exist W1 W2 s.t.
-    #   e(10[G],W1)e(2[G],(-1*)W2) = 1
+    #   e([10]_1,W1)e([2]_2,(-1*)W2) = 1
+    
     c_a = [10,None]
     c_b = [2,None]
     crs,td = GS.sampleParams(pp)
@@ -146,6 +153,8 @@ def example():
     verify_time, verify_pair = end_bench(group)
     print(verify_pair)
     print(out)
+
+    
 #example()
 
 def main(n):
