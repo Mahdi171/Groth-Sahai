@@ -31,39 +31,27 @@ class GS():
         return crs, tpd
     
     def commit(self, crs , X, Y, C_x, C_y):
-        com_x = {}; com_y = {}
+        com_x = []
+        com_y = []
         N = len(C_x) #= len(C_y)
-        # First sample fresh randomness for the witnesses and assign 0 for public variables.
-        r = list(map(lambda i: [0,0] if C_x[i] == 0 \
-                    else [group.random(),group.random()], range(N)))
-        s = list(map(lambda i: [0,0] if C_y[i] == 0 \
-                    else [group.random(),group.random()], range(N)))
-        # After forming vectors r and s, compute the commitments to both X and Y elements.
-        com_x = [[(crs['vv1'][0]**r[i][0])*(crs['ww1'][0]**s[i][0]),\
-                X[i]*(crs['vv1'][1]**r[i][0])*(crs['ww1'][1]**s[i][0])] for i in range(N)]
-        com_y = [[(crs['vv2'][0]**r[i][1])*(crs['ww2'][0]**s[i][1]),\
-                Y[i]*(crs['vv2'][1]**r[i][1])*(crs['ww2'][1]**s[i][1])] for i in range(N)]
+        r = [([0,0] if C_x[i] == 0 else [group.random(),group.random()]) for i in range(N)]
+        s = [([0,0] if C_y[i] == 0 else [group.random(),group.random()]) for i in range(N)]
+        for i in range(N):
+            com_x.append([(crs['vv1'][0]**r[i][0])*(crs['ww1'][0]**s[i][0]), X[i]*(crs['vv1'][1]**r[i][0])*(crs['ww1'][1]**s[i][0])])
+            com_y.append([(crs['vv2'][0]**r[i][1])*(crs['ww2'][0]**s[i][1]), Y[i]*(crs['vv2'][1]**r[i][1])*(crs['ww2'][1]**s[i][1])])
         return com_x, com_y, r, s
     def prove(self, crs, X, r, s, com_y):
-        # Define prod function that multiplies elements of any given list
-        def prod(list):
-            result = 1
-            for x in list:
-                result *= x
-            return result
-        # Generate random values alpha, beta, gamma, and delta
         alpha, beta, gamma, delta = [group.random() for _ in range(4)]
-        # Compute proof components; pi_v1, pi_v2, pi_w1, and pi_w2
-        pi_v1 = [prod([com_y[i][0]**r[i][0] for i in range(len(X))]) * crs['vv2'][0]**alpha * crs['ww2'][0]**beta,\
-                prod([com_y[i][1]**r[i][0] for i in range(len(X))]) * crs['vv2'][1]**alpha * crs['ww2'][1]**beta]
-        pi_w1 = [prod([com_y[i][0]**s[i][0] for i in range(len(X))]) * crs['vv2'][0]**gamma * crs['ww2'][0]**delta,\
-                prod([com_y[i][1]**s[i][0] for i in range(len(X))]) * crs['vv2'][1]**gamma * crs['ww2'][1]**delta]
+        pi_v1 = [reduce(lambda x, y: x * y, [com_y[i][0]**r[i][0] for i in range(len(X))]) * crs['vv2'][0]**alpha * crs['ww2'][0]**beta,\
+                reduce(lambda x, y: x * y, [com_y[i][1]**r[i][0] for i in range(len(X))]) * crs['vv2'][1]**alpha * crs['ww2'][1]**beta]
+        pi_w1 = [reduce(lambda x, y: x * y, [com_y[i][0]**s[i][0] for i in range(len(X))]) * crs['vv2'][0]**gamma * crs['ww2'][0]**delta,\
+                reduce(lambda x, y: x * y, [com_y[i][1]**s[i][0] for i in range(len(X))]) * crs['vv2'][1]**gamma * crs['ww2'][1]**delta]
         pi_v2 = [crs['vv1'][0]**-alpha * crs['ww1'][0]**(-gamma),\
-                prod([X[i]**r[i][1] for i in range(len(X))]) * crs['vv1'][1]**-alpha * crs['ww1'][1]**-gamma]
+                reduce(lambda x, y: x * y, [X[i]**r[i][1] for i in range(len(X))]) * crs['vv1'][1]**-alpha * crs['ww1'][1]**-gamma]
         pi_w2 = [crs['vv1'][0]**-beta * crs['ww1'][0]**(-delta),\
-                prod([X[i]**s[i][1] for i in range(len(X))]) * crs['vv1'][1]**-beta * crs['ww1'][1]**-delta]
-        # Return the proof values as a dictionary with 8 group elements
+                reduce(lambda x, y: x * y, [X[i]**s[i][1] for i in range(len(X))]) * crs['vv1'][1]**-beta * crs['ww1'][1]**-delta]
         return {'pi_v1': pi_v1, 'pi_w1': pi_w1, 'pi_v2': pi_v2, 'pi_w2': pi_w2}
+    
     def verify(self, pp, crs, Pi, com_x, com_y):
         # Initialize dictionaries and LHS
         p1 = {}; p2 = {}; LHS = 1
